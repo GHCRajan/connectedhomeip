@@ -38,14 +38,14 @@ namespace Dnssd {
 using namespace chip::Platform;
 
 namespace {
-jobject sResolverObject         = nullptr;
-jobject sMdnsCallbackObject     = nullptr;
-jmethodID sResolveMethod        = nullptr;
+jobject sResolverObject           = nullptr;
+jobject sMdnsCallbackObject       = nullptr;
+jmethodID sResolveMethod          = nullptr;
 jmethodID sGetAttributeKeysMethod = nullptr;
 jmethodID sGetAttributeDataMethod = nullptr;
 jclass sMdnsCallbackClass         = nullptr;
-jmethodID sPublishMethod        = nullptr;
-jmethodID sRemoveServicesMethod = nullptr;
+jmethodID sPublishMethod          = nullptr;
+jmethodID sRemoveServicesMethod   = nullptr;
 } // namespace
 
 // Implementation of functions declared in lib/dnssd/platform/Dnssd.h
