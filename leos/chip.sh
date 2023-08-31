@@ -12,8 +12,9 @@ _bld_links=0
 _bld_zap=0
 _bld_clean=0
 _bld_dsub=0
+_bld_sync=0
 
-_matter_git="/home/hcr/work/chip.hcr"
+_matter_git="/home/hcr/work/matter/connectedhomeip"
 
 _bb_sdk_env="/bigbend/bigbend_sdk/environment-setup-cortexa7t2hf-neon-vfpv4-lennox-linux-gnueabi"
 _rpi3_sdk_env="/opt/rpi3/environment-setup-cortexa53-leos-linux"
@@ -23,6 +24,10 @@ for i in $@
 do
   if [ "$i" == "help" ]; then
     _bld_help=1
+  fi
+
+  if [ "$i" == "sync" ]; then
+    _bld_sync=1
   fi
 
   if [ "$i" == "dsub" ]; then
@@ -59,6 +64,7 @@ do
 done
 
 if [ $_bld_help -eq 0 ] && 
+  [ $_bld_sync -eq 0 ] &&
   [ $_bld_dsub -eq 0 ] &&
   [ $_bld_links -eq 0 ] &&
   [ $_bld_zap -eq 0 ] && 
@@ -85,6 +91,7 @@ if [ $_bld_help -eq 1 ]; then
   echo "    host : Build for Host OS"
   echo "   clean : Clean the output folder before building"
   echo "    dsub : Delete submodules"
+  echo "    sync : Sync repo with remote"
   echo
   exit 0
 fi
@@ -186,16 +193,47 @@ clean_sub_module()
 	echo "Cleaned submodule $1"
 }
 
+sync_remote()
+{
+  echo "Fetching upstream changes"
+  git fetch upstream
+
+  echo "Discarding working branch"
+  git switch working
+  git reset HEAD
+  git stash
+
+  echo "Synching master branch"
+  git switch master
+  git pull
+
+  echo "Synching v1.1 branch"
+  git switch v1.1-branch
+  git pull
+
+  echo "Synching working branch"
+  git switch working
+  git rebase v1.1-branch
+  git stash pop
+
+  echo "Working branch rebased to the latest as in v1.1-branch"
+}
+
 delete_sub_modules()
 {
 _required="
-  nlassert
+	nlassert
+  nlfaultinjection
 	nlio
 	nlunit-test
+  qrcode
+  m5stack-tft
   pigweed
+  nanopb
 	zap
 	jsoncpp
 	editline
+  libwebsockets
 "
 	_file='.dsub_list'
 
@@ -208,8 +246,8 @@ _required="
 			clean_sub_module $_line
 		done < $_file
 
-    rm $_file
-    
+    #rm $_file
+
 	else
 		echo "Creating $_file"
 		git config --file .gitmodules --get-regexp path | awk '{ print $2 }' >$_file
@@ -218,6 +256,11 @@ _required="
 
 	exit 1
 }
+
+if [ $_bld_sync -eq 1 ]; then
+  sync_remote
+  exit 0
+fi
 
 if [ $_bld_dsub -eq 1 ]; then
   delete_sub_modules
